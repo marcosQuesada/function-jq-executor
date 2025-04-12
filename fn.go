@@ -51,7 +51,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 	name, err := xr.Resource.GetString("spec.name")
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot read spec.region field of %s", xr.Resource.GetKind()))
+		response.Fatal(rsp, errors.Wrapf(err, "cannot read spec.name field of %s", xr.Resource.GetKind()))
 		return rsp, nil
 	}
 

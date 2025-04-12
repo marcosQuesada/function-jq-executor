@@ -50,3 +50,7 @@ Create function skeleton:
 crossplane xpkg init function-jq-executor function-template-go -d function-jq-executor 
 ```
 
+Run function locally:
+```shell
+go run . --insecure --debug
+```

@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: example.crossplane.io/v1
-    kind: XR
+    kind: XRegisterExample
   mode: Pipeline
   pipeline:
   - step: patch-and-transform
@@ -49,13 +49,13 @@ spec:
                 statusCode: 200
           patches:
             - type: FromCompositeFieldPath
-              fromFieldPath: "spec.location"
-              toFieldPath: "spec.forProvider.region"
-              transforms:
-                - type: map
-                  map:
-                    EU: "eu-north-1"
-                    US: "us-east-2"
+              fromFieldPath: "spec.name"
+              toFieldPath: "metadata.name"
+#              transforms:
+#                - type: map
+#                  map:
+#                    EU: "eu-north-1"
+#                    US: "us-east-2"
 
   - step: execute-json-query
     functionRef:
