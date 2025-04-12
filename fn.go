@@ -8,7 +8,9 @@ import (
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
+	"github.com/itchyny/gojq"
 	"github.com/marcosQuesada/function-jq-executor/input/v1beta1"
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 // Function returns whatever response you ask it to.
@@ -64,8 +66,30 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	}
 
 	for _, d := range desired {
+
+		data, err := d.Resource.GetString(in.JSONDataPath)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot get data path of %s", d.Resource.GetKind()))
+			return rsp, nil
+		}
+
+		res, err := runJQuery(in.JSONQuery, data)
+		if err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "unable to run query  %s", d.Resource.GetKind()))
+			return rsp, nil
+		}
+
+		if err := xr.Resource.SetString(in.ResponsePath, res.(string)); err != nil {
+			response.Fatal(rsp, errors.Wrapf(err, "cannot set response path of %s", d.Resource.GetKind()))
+			return rsp, nil
+		}
+
 		if err := d.Resource.SetString("metadata.annotations[\"my-label\"]", name); err != nil {
 			response.Warning(rsp, fmt.Errorf("unable to set annotation, error: %s", err)).TargetCompositeAndClaim()
+		}
+
+		if err := response.SetDesiredCompositeResource(rsp, xr); err != nil {
+			response.Warning(rsp, fmt.Errorf("unable to set desired composite resource, error: %s", err)).TargetCompositeAndClaim()
 		}
 	}
 
@@ -79,4 +103,27 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		TargetCompositeAndClaim()
 
 	return rsp, nil
+}
+
+func runJQuery(jqQuery string, rawObj string) (any, error) {
+	var obj any
+	if err := json.Unmarshal([]byte(rawObj), &obj); err != nil {
+		return nil, errors.Errorf("cannot unmarshal raw object: %s", rawObj)
+	}
+	query, err := gojq.Parse(jqQuery)
+	if err != nil {
+		return nil, errors.Errorf("cannot parse jq query: %s", jqQuery)
+	}
+
+	queryRes, ok := query.Run(obj).Next()
+	if !ok {
+		return nil, errors.Errorf("unable to run query %s", fmt.Sprint(queryRes))
+	}
+
+	err, ok = queryRes.(error)
+	if ok {
+		return nil, errors.Errorf("invalid query %s error %s", jqQuery, err.Error())
+	}
+
+	return queryRes, nil
 }

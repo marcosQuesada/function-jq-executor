@@ -23,6 +23,7 @@ type Input struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	JSONDataPath string `json:"json-data-path"` // @TODO: From Desired Resource, POC expecting single desired resource in pipe (kind, apiVersion & name?)
-	JSONQuery    string `json:"json-query"		// @TODO: Static Query POC, enable FromComposite; path:
+	JSONQuery    string `json:"json-query"`     // @TODO: Static Query POC, enable FromComposite; path:
+	ResponsePath string `json:"response-path"`
 	// FromComposite:`
 }

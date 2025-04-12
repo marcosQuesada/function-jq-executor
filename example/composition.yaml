@@ -63,5 +63,6 @@ spec:
     input:
       apiVersion: template.fn.crossplane.io/v1beta1
       kind: Input
-      json-data-path:
-      json-query: "Hello world"
+      json-data-path: "status.response.body"
+      json-query: ".id"
+      response-path: "status.value"

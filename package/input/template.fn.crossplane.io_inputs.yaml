@@ -42,9 +42,12 @@ spec:
             type: string
           metadata:
             type: object
+          response-path:
+            type: string
         required:
         - json-data-path
         - json-query
+        - response-path
         type: object
     served: true
     storage: true
