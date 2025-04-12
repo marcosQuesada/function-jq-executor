@@ -1,0 +1,67 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-jq-executor
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XR
+  mode: Pipeline
+  pipeline:
+  - step: patch-and-transform
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: bucket
+          base:
+            apiVersion: http.crossplane.io/v1alpha2
+            kind: DisposableRequest
+            metadata:
+              name: obtain-jwt-token
+            spec:
+              deletionPolicy: Orphan
+              forProvider:
+                url: http://localhost:8000/v1/login/
+                method: GET
+                shouldLoopInfinitely: true
+                nextReconcile: 72h # 3 days
+              providerConfigRef:
+                name: http-conf
+            status:
+              response:
+                body: >-
+                  {
+                    "id":"65565b69681e0b47dcea4464",
+                    "key":"value"
+                  }
+                headers:
+                  Content-Length:
+                    - '104'
+                  Content-Type:
+                    - application/json
+                  Date:
+                    - Thu, 16 Nov 2023 18:11:53 GMT
+                  Server:
+                    - uvicorn
+                statusCode: 200
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: "spec.location"
+              toFieldPath: "spec.forProvider.region"
+              transforms:
+                - type: map
+                  map:
+                    EU: "eu-north-1"
+                    US: "us-east-2"
+
+  - step: execute-json-query
+    functionRef:
+      name: function-jq-executor
+    input:
+      apiVersion: template.fn.crossplane.io/v1beta1
+      kind: Input
+      json-data-path:
+      json-query: "Hello world"
