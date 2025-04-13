@@ -1,7 +1,7 @@
 # function-jq-executor
-[![CI](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml)
+[![CI](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosQuesada/function-jq-executor/actions/workflows/ci.yml)
 
-A Composite function that executes JSON Queries from Composed Resources. 
+A Composite function that executes JSON Queries from Composed Resources field paths. 
 
 Useful when there is a need of execute JSON Queries in the composition space. Implementation at Proof of Concept stage.
 
