@@ -1,40 +1,17 @@
-# function-template-go
+# function-jq-executor
 [![CI](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml)
 
-A template for writing a [composition function][functions] in [Go][go].
+A Composite function that executes JSON Queries from Composed Resources. 
 
-To learn how to use this template:
+Useful when there is a need of execute JSON Queries in the composition space. Implementation at Proof of Concept stage.
 
-* [Follow the guide to writing a composition function in Go][function guide]
-* [Learn about how composition functions work][functions]
-* [Read the function-sdk-go package documentation][package docs]
+As example, this composite function enables scenarios like this:
+- Fire HTTP Request to a service (DisposableRequest from provider-http)
+- a JSON HTTP Response body is stored at status.response.body
+- function-jq-executor executes JSON Query defined at input.json-query field and publish results to Composite Resource at input.response-path path
+- From Composite Resource status value we can patch another Composited Resource and chain previous result value
 
-If you just want to jump in and get started:
-
-1. Replace `function-template-go` with your function in `go.mod`,
-   `package/crossplane.yaml`, and any Go imports. (You can also do this
-   automatically by running the `./init.sh <function-name>` script.)
-1. Update `input/v1beta1/` to reflect your desired input (and run `go generate ./...`)
-1. Add your logic to `RunFunction` in `fn.go`
-1. Add tests for your logic in `fn_test.go`
-1. Update this file, `README.md`, to be about your function!
-
-This template uses [Go][go], [Docker][docker], and the [Crossplane CLI][cli] to
-build functions.
-
-```shell
-# Run code generation - see input/generate.go
-$ go generate ./...
-
-# Run tests - see fn_test.go
-$ go test ./...
-
-# Build the function's runtime image - see Dockerfile
-$ docker build . --tag=runtime
-
-# Build a function package - see package/crossplane.yaml
-$ crossplane xpkg build -f package --embed-runtime-image=runtime
-```
+Check example folder to see full composition details.
 
 [functions]: https://docs.crossplane.io/latest/concepts/composition-functions
 [go]: https://go.dev
@@ -44,37 +21,3 @@ $ crossplane xpkg build -f package --embed-runtime-image=runtime
 [cli]: https://docs.crossplane.io/latest/cli
 
 ---
-### Development steps
-Create function skeleton:
-```
-crossplane xpkg init function-jq-executor function-template-go -d function-jq-executor 
-```
-
-Run function locally:
-```shell
-go run . --insecure --debug
-```
-
-## Build
-```shell
-docker build . --quiet --platform=linux/amd64 --tag runtime-amd64
-crossplane xpkg build \
-    --package-root=package \
-    --embed-runtime-image=runtime-amd64 \
-    --package-file=function-amd64.xpkg
-    
-crossplane xpkg push --package-files=function-amd64.xpkg  docker.io/marcosquesada/function-jq-executor:v0.0.5
- 
-```
----
-```shell
-kind create cluster
-```
-```shell
-kubectl create namespace crossplane-system
-
-helm repo add crossplane-stable https://charts.crossplane.io/stable
-helm repo update
-
-helm install crossplane --namespace crossplane-system crossplane-stable/crossplane
-```

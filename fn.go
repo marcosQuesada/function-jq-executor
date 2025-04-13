@@ -84,6 +84,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return rsp, nil
 	}
 
+	response.Normal(rsp, "execution success!").TargetComposite()
 	response.ConditionTrue(rsp, "FunctionSuccess", "Success").TargetCompositeAndClaim()
 
 	return rsp, nil

@@ -74,7 +74,7 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1beta1",
 						"kind": "Input",
-					    "json-data-path": "status.response.body",
+					    "json-data-path": "status.data",
 					    "json-query": ".id",
 					    "response-path": "status.value"
 					}`),
@@ -88,6 +88,9 @@ func TestRunFunction(t *testing.T) {
 							  },
 							  "spec": {
 								"name": "foo"
+							  },
+                              "status": {
+								"data": "{\"id\":\"9696986696876\"}"
 							  }
 							}`),
 						},
@@ -142,10 +145,71 @@ func TestRunFunction(t *testing.T) {
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
 					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{
+						Composite: &fnv1.Resource{
+							Resource: resource.MustStructJSON(`{
+							  "apiVersion": "example.crossplane.io/v1",
+							  "kind": "XRegisterExample",
+							  "metadata": {
+								"name": "example-xr"
+							  },
+							  "spec": {
+								"name": "foo"
+							  },
+                              "status": {
+								"data": "{\"id\":\"9696986696876\"}",
+								"value": "9696986696876"
+							  }
+							}`),
+						},
+						Resources: map[string]*fnv1.Resource{
+							"http-request": {
+								Resource: resource.MustStructJSON(`{
+								  "apiVersion": "http.crossplane.io/v1alpha2",
+								  "kind": "DisposableRequest",
+								  "metadata": {
+									"name": "obtain-jwt-token"
+								  },
+								  "spec": {
+									"deletionPolicy": "Orphan",
+									"forProvider": {
+									  "url": "http://localhost:8000/v1/login/",
+									  "method": "GET",
+									  "shouldLoopInfinitely": true,
+									  "nextReconcile": "72h"
+									},
+									"providerConfigRef": {
+									  "name": "http-conf"
+									}
+								  },
+								  "status": {
+									"response": {
+									  "body": "{\n  \"id\":\"65565b69681e0b47dcea4464\",\n  \"key\":\"value\"\n}",
+									  "headers": {
+										"Content-Length": [
+										  104
+										],
+										"Content-Type": [
+										  "application/json"
+										],
+										"Date": [
+										  "Thu, 16 Nov 2023 18:11:53 GMT"
+										],
+										"Server": [
+										  "uvicorn"
+										]
+									  },
+									  "statusCode": 200
+									}
+								  }
+								}`),
+							},
+						},
+					},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_NORMAL,
-							Message:  "I was run with input \"Hello, world\"!",
+							Message:  "execution success!",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
