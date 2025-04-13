@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"github.com/itchyny/gojq"
+	"github.com/marcosQuesada/function-jq-executor/input/v1beta1"
+	"k8s.io/apimachinery/pkg/util/json"
+
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/logging"
 	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
-	"github.com/itchyny/gojq"
-	"github.com/marcosQuesada/function-jq-executor/input/v1beta1"
-	"k8s.io/apimachinery/pkg/util/json"
 )
 
 // Function returns whatever response you ask it to.
@@ -79,7 +81,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	}
 
 	if err := response.SetDesiredCompositeResource(rsp, xr); err != nil {
-		response.Warning(rsp, fmt.Errorf("unable to set desired composite resource, error: %s", err)).TargetCompositeAndClaim()
 		response.Fatal(rsp, errors.Wrapf(err, "unable to set desired composite resource %s", xr.Resource.GetKind()))
 		return rsp, nil
 	}
