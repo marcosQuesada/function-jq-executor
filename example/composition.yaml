@@ -19,19 +19,25 @@ spec:
           base:
             apiVersion: http.crossplane.io/v1alpha2
             kind: DisposableRequest
+            metadata:
+              name: fake
             spec:
               deletionPolicy: Orphan
               forProvider:
-                url: http://localhost:8000/api/v1/pet/fake
+                url: http://172.17.0.1:8000/api/v1/pet/fake
                 method: GET
-                shouldLoopInfinitely: true
-                nextReconcile: 1m
+                rollbackRetriesLimit: 5
               providerConfigRef:
                 name: http-conf
           patches:
-            - type: FromCompositeFieldPath
-              fromFieldPath: spec.name
-              toFieldPath: metadata.annotations["label"]
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: spec.name
+                strategy: string
+                string:
+                  fmt: "first-request-%s"
+              toFieldPath: metadata.name
             - type: CombineFromComposite
               combine:
                 variables:
@@ -49,7 +55,6 @@ spec:
     input:
       apiVersion: template.fn.crossplane.io/v1beta1
       kind: Input
-      #json-data-path: "status.response.body" # @TODO: To status.data
       json-data-path: status.data
       json-query: ".id"
       response-path: status.value
@@ -64,22 +69,28 @@ spec:
           base:
             apiVersion: http.crossplane.io/v1alpha2
             kind: DisposableRequest
+            metadata:
+              name: fake-second
             spec:
               deletionPolicy: Orphan
               forProvider:
-                url: http://localhost:8000/api/v1/notify/fake
+                url: http://172.17.0.1:8000/api/v1/notify/fake
                 method: GET
-                shouldLoopInfinitely: true
-                nextReconcile: 1m # 3 days
+                rollbackRetriesLimit: 5
               providerConfigRef:
                 name: http-conf
           patches:
-            - type: FromCompositeFieldPath
-              fromFieldPath: spec.name
-              toFieldPath: metadata.annotations["label"]
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: spec.name
+                strategy: string
+                string:
+                  fmt: "second-request-%s"
+              toFieldPath: metadata.name
             - type: FromCompositeFieldPath
               fromFieldPath: status.value
-              toFieldPath:  metadata.annotations["request-1-value"]
+              toFieldPath: metadata.labels["request-1-value"]
               policy:
                 fromFieldPath: Required
             - type: CombineFromComposite
