@@ -32,8 +32,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			WithMessage("unable to get input.").
 			TargetCompositeAndClaim()
 
-		response.Warning(rsp, errors.New("unable to get input")).TargetCompositeAndClaim()
-
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
 		return rsp, nil
 	}
@@ -44,20 +42,9 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			WithMessage(fmt.Sprintf("cannot get observed composite resource , error: %s", err.Error())).
 			TargetCompositeAndClaim()
 
-		// @TODO: WARNING OR FATAL
-		response.Warning(rsp, errors.New("cannot get observed composite resource")).TargetCompositeAndClaim()
-
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get observed composite resource from %T", req))
 		return rsp, nil
 	}
-
-	name, err := xr.Resource.GetString("spec.name")
-	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot read spec.name field of %s", xr.Resource.GetKind()))
-		return rsp, nil
-	}
-
-	f.log.Info("Running function", "name", name)
 
 	desired, err := request.GetDesiredComposedResources(req)
 	if err != nil {
@@ -65,65 +52,70 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return rsp, nil
 	}
 
-	for _, d := range desired {
+	f.log.Info("Running function", "tag", req.GetMeta().GetTag(), "total-desired", len(desired))
 
-		data, err := d.Resource.GetString(in.JSONDataPath)
-		if err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot get data path of %s", d.Resource.GetKind()))
-			return rsp, nil
-		}
-
-		res, err := runJQuery(in.JSONQuery, data)
-		if err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "unable to run query  %s", d.Resource.GetKind()))
-			return rsp, nil
-		}
-
-		if err := xr.Resource.SetString(in.ResponsePath, res.(string)); err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot set response path of %s", d.Resource.GetKind()))
-			return rsp, nil
-		}
-
-		if err := d.Resource.SetString("metadata.annotations[\"my-label\"]", name); err != nil {
-			response.Warning(rsp, fmt.Errorf("unable to set annotation, error: %s", err)).TargetCompositeAndClaim()
-		}
-
-		if err := response.SetDesiredCompositeResource(rsp, xr); err != nil {
-			response.Warning(rsp, fmt.Errorf("unable to set desired composite resource, error: %s", err)).TargetCompositeAndClaim()
-		}
-	}
-
-	// Finally, save the updated desired composed resources to the response.
-	if err := response.SetDesiredComposedResources(rsp, desired); err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot set desired composed resources in %T", rsp))
+	data, err := xr.Resource.GetString(in.JSONDataPath)
+	if err != nil {
+		f.log.Info("cannot get value from JSON data path", "error", err)
 		return rsp, nil
 	}
 
-	response.ConditionTrue(rsp, "FunctionSuccess", "Success").
-		TargetCompositeAndClaim()
+	res, err := runJQuery(in.JSONQuery, data)
+	if err != nil {
+		f.log.Info("Error executing jQuery", "error", err)
+		response.Fatal(rsp, errors.Wrapf(err, "unable to run query  %s", xr.Resource.GetKind()))
+		return rsp, nil
+	}
+
+	if res == "" {
+		f.log.Info("Empty results found", "resource", xr.Resource.GetKind())
+		return rsp, nil
+	}
+
+	if err := xr.Resource.SetString(in.ResponsePath, res); err != nil {
+		f.log.Info("cannot set response path", "error", err, "resource", xr.Resource.GetKind())
+		response.Fatal(rsp, errors.Wrapf(err, "cannot set response path of %s", xr.Resource.GetKind()))
+		return rsp, nil
+	}
+
+	if err := response.SetDesiredCompositeResource(rsp, xr); err != nil {
+		response.Warning(rsp, fmt.Errorf("unable to set desired composite resource, error: %s", err)).TargetCompositeAndClaim()
+		response.Fatal(rsp, errors.Wrapf(err, "unable to set desired composite resource %s", xr.Resource.GetKind()))
+		return rsp, nil
+	}
+
+	response.ConditionTrue(rsp, "FunctionSuccess", "Success").TargetCompositeAndClaim()
 
 	return rsp, nil
 }
 
-func runJQuery(jqQuery string, rawObj string) (any, error) {
+func runJQuery(jqQuery string, rawObj string) (string, error) {
 	var obj any
 	if err := json.Unmarshal([]byte(rawObj), &obj); err != nil {
-		return nil, errors.Errorf("cannot unmarshal raw object: %s", rawObj)
+		return "", errors.Errorf("cannot unmarshal raw object: %s", rawObj)
 	}
 	query, err := gojq.Parse(jqQuery)
 	if err != nil {
-		return nil, errors.Errorf("cannot parse jq query: %s", jqQuery)
+		return "", errors.Errorf("cannot parse jq query: %s", jqQuery)
 	}
 
 	queryRes, ok := query.Run(obj).Next()
 	if !ok {
-		return nil, errors.Errorf("unable to run query %s", fmt.Sprint(queryRes))
+		return "", errors.Errorf("unable to run query %s", fmt.Sprint(queryRes))
 	}
 
 	err, ok = queryRes.(error)
 	if ok {
-		return nil, errors.Errorf("invalid query %s error %s", jqQuery, err.Error())
+		return "", errors.Errorf("invalid query %s error %s", jqQuery, err.Error())
 	}
 
-	return queryRes, nil
+	if queryRes == nil {
+		return "", nil
+	}
+
+	q, ok := queryRes.(string)
+	if !ok {
+		return "", errors.Errorf("expected string response, got %T value %v", queryRes, queryRes)
+	}
+	return q, nil
 }

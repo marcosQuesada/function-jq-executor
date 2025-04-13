@@ -4,3 +4,7 @@ metadata:
   name: provider-http
 spec:
   package: "xpkg.upbound.io/crossplane-contrib/provider-http:v1.0.8"
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1
+    kind: DeploymentRuntimeConfig
+    name: default-debug

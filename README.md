@@ -54,3 +54,27 @@ Run function locally:
 ```shell
 go run . --insecure --debug
 ```
+
+## Build
+```shell
+docker build . --quiet --platform=linux/amd64 --tag runtime-amd64
+crossplane xpkg build \
+    --package-root=package \
+    --embed-runtime-image=runtime-amd64 \
+    --package-file=function-amd64.xpkg
+    
+crossplane xpkg push --package-files=function-amd64.xpkg  docker.io/marcosquesada/function-jq-executor:v0.0.5
+ 
+```
+---
+```shell
+kind create cluster
+```
+```shell
+kubectl create namespace crossplane-system
+
+helm repo add crossplane-stable https://charts.crossplane.io/stable
+helm repo update
+
+helm install crossplane --namespace crossplane-system crossplane-stable/crossplane
+```

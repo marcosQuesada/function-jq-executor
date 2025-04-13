@@ -1,0 +1,13 @@
+apiVersion: http.crossplane.io/v1alpha2
+kind: DisposableRequest
+metadata:
+  name: example-request
+spec:
+  deletionPolicy: Orphan
+  forProvider:
+    url: http://172.17.0.1:8080/api/v1/pet/foo
+    method: GET
+    shouldLoopInfinitely: true
+    nextReconcile: 72h # 3 days
+  providerConfigRef:
+    name: http-conf
