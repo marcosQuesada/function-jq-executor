@@ -28,9 +28,9 @@ spec:
               may reject unrecognized values.
               More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
-          json-data-path:
+          jsonDataPath:
             type: string
-          json-query:
+          jsonQuery:
             type: string
           kind:
             description: |-
@@ -42,12 +42,12 @@ spec:
             type: string
           metadata:
             type: object
-          response-path:
+          responsePath:
             type: string
         required:
-        - json-data-path
-        - json-query
-        - response-path
+        - jsonDataPath
+        - jsonQuery
+        - responsePath
         type: object
     served: true
     storage: true

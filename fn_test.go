@@ -74,9 +74,9 @@ func TestRunFunction(t *testing.T) {
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "template.fn.crossplane.io/v1beta1",
 						"kind": "Input",
-					    "json-data-path": "status.data",
-					    "json-query": ".id",
-					    "response-path": "status.value"
+					    "jsonDataPath": "status.data",
+					    "jsonQuery": ".id",
+					    "responsePath": "status.value"
 					}`),
 					Observed: &fnv1.State{
 						Composite: &fnv1.Resource{

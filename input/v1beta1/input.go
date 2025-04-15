@@ -22,8 +22,8 @@ type Input struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	JSONDataPath string `json:"json-data-path"` // @TODO: From Desired Resource, POC expecting single desired resource in pipe (kind, apiVersion & name?)
-	JSONQuery    string `json:"json-query"`     // @TODO: Static Query POC, enable FromComposite; path:
-	ResponsePath string `json:"response-path"`
-	// FromComposite:`
+	JSONDataPath string `json:"jsonDataPath"` // @TODO: From Desired Resource, POC expecting single desired resource in pipe (kind, apiVersion & name?)
+	JSONQuery    string `json:"jsonQuery"`    // @TODO: Static Query POC, enable FromComposite; path:
+	ResponsePath string `json:"responsePath"`
+	// @TODO Combine
 }
