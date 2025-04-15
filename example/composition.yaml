@@ -49,15 +49,15 @@ spec:
             - type: ToCompositeFieldPath
               fromFieldPath: status.response.body
               toFieldPath: status.data
-  - step: execute-json-query
+  - step: execute-jsonQuery
     functionRef:
       name: function-jq-executor
     input:
       apiVersion: template.fn.crossplane.io/v1beta1
       kind: Input
-      json-data-path: status.data
-      json-query: ".id"
-      response-path: status.value
+      jsonDataPath: status.data
+      jsonQuery: ".id"
+      responsePath: status.value
   - step: patch-and-transform-second-request
     functionRef:
       name: function-patch-and-transform

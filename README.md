@@ -8,27 +8,27 @@ Useful when there is a need of execute JSON Queries in the composition space. Im
 
 ## Input Description
 ```shell
-  - step: execute-json-query
+  - step: execute-jsonQuery
     functionRef:
       name: function-jq-executor
     input:
       apiVersion: template.fn.crossplane.io/v1beta1
       kind: Input
-      json-data-path: status.data
-      json-query: ".id"
-      response-path: status.value
+      jsonDataPath: status.data
+      jsonQuery: ".id"
+      responsePath: status.value
 ```
 Property description for this example:
-- json-data-path: Path at Composite Resource where to find the JSON data to query, string expected. 
-- json-query: Query to execute against JSON data.
-- response-path: Path at Composite Resource to store query result.
+- jsonDataPath: Path at Composite Resource where to find the JSON data to query, string expected. 
+- jsonQuery: Query to execute against JSON data.
+- responsePath: Path at Composite Resource to store query result.
 Current implementation is pipelined with function-patch-and-transform to write JSON data input to Composite Resource Status and patches result values.
 
 ## Use Case Example
 This composite function enables scenarios like this:
 - Fire HTTP Request to a service (DisposableRequest from provider-http)
 - a JSON HTTP Response body is stored at status.response.body
-- function-jq-executor executes JSON Query defined at input.json-query field and publish results to Composite Resource at input.response-path path
+- function-jq-executor executes JSON Query defined at input.jsonQuery field and publish results to Composite Resource at input.responsePath path
 - From Composite Resource status value we can patch another Composited Resource and chain previous result value
 
 ```shell
@@ -83,15 +83,15 @@ spec:
             - type: ToCompositeFieldPath
               fromFieldPath: status.response.body
               toFieldPath: status.data
-  - step: execute-json-query
+  - step: execute-jsonQuery
     functionRef:
       name: function-jq-executor
     input:
       apiVersion: template.fn.crossplane.io/v1beta1
       kind: Input
-      json-data-path: status.data
-      json-query: ".id"
-      response-path: status.value
+      jsonDataPath: status.data
+      jsonQuery: ".id"
+      responsePath: status.value
   - step: patch-and-transform-second-request
     functionRef:
       name: function-patch-and-transform
